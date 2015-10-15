@@ -83,7 +83,7 @@ import java.util.concurrent.ExecutorService;
 public class DeferredStartIgniteSpringBean implements Ignite, DisposableBean, InitializingBean,
         ApplicationContextAware, Externalizable {
     /** */
-    private static final long serialVersionUID = 0L;
+    private static final long serialVersionUID = 0;
     /** */
     private Ignite g;
     /** */

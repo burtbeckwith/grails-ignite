@@ -6,18 +6,18 @@ package org.grails.ignite
  */
 class IgniteClosureJobWrapper implements Runnable, Serializable {
 
-    private Closure closure;
-    private Object result;
+    private Closure closure
+    private result
 
-    public IgniteClosureJobWrapper(Closure closure) {
-        this.closure = closure;
+    IgniteClosureJobWrapper(Closure closure) {
+        this.closure = closure
     }
 
-    public void run() {
-        this.result = closure.call();
+    void run() {
+        result = closure.call()
     }
 
-    public Object get() {
-        return this.result;
+    def get() {
+        return result
     }
 }

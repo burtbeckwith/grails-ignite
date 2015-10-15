@@ -17,12 +17,12 @@ A plugin that provides basic Grails integration with the Apache Ignite compute g
 
 The plugin provides a configured instance of the Ingite grid as a bean called "grid", which you can access via injection in controllers and services:
 
-	def grid
+    def grid
 
 
 #Configuration
 
-In order to support hibernate l2 caching, which requires the Ignite grid to be started prior to the sessionFactory and therefore the vast majority of Grails artifacts, Ignite must be configured from external configuration files.
+In order to support Hibernate l2 caching, which requires the Ignite grid to be started prior to the sessionFactory and therefore the vast majority of Grails artifacts, Ignite must be configured from external configuration files.
 
 The external files must be referenced in the ignite configuration block in Config.groovy:
 
@@ -33,23 +33,23 @@ ignite {
             "file:ignite/conf/*.groovy"
     ]
     gridName="myGrid"
-    
+
     /*
      * This setting must be enabled on the machine that builds the WAR file for the target environment,
      * since it will determine if the correct filters are incorporated into the web.xml file
      */
     webSessionClusteringEnabled=true
-    
-    /** 
+
+    /**
       * Enable distributed hibernate l2 caching
-      * You must also set the region factory correctly 
+      * You must also set the region factory correctly
       */
     l2CacheEnabled=true
-    
+
     /**
-     * DEFAULTS; you can also configure individual caches as spring beans 
+     * DEFAULTS; you can also configure individual caches as spring beans
      */
-    l2cache { 
+    l2cache {
         associationMemoryMode =  CacheMemoryMode.OFFHEAP_TIERED
         associationAtomicityMode = CacheAtomicityMode.TRANSACTIONAL
         associationWriteSynchronizationMode = CacheWriteSynchronizationMode.FULL_ASYNC
@@ -61,7 +61,7 @@ ignite {
         entityMaxSize = 1000
         entityEvictSynchronized=true
     }
-    
+
     peerClassLoadingEnabled=false
     discoverySpi {
         networkTimeout = 5000
@@ -81,11 +81,11 @@ See the `ignite/conf` directory for sample configuration files. For basic config
 The project contains an implementation of `IgniteLogger` for use with Grails. This class allows you to use the Grails log4j DSL to configure logging for the embedded Ignite node. The logger can be configured from the Ignite spring bean:
 
 ```
-        gridLogger(org.grails.ignite.IgniteGrailsLogger)
-        
-        igniteCfg(IgniteConfiguration) {
-        	gridLogger = ref('gridLogger')
-        }
+gridLogger(org.grails.ignite.IgniteGrailsLogger)
+
+igniteCfg(IgniteConfiguration) {
+    gridLogger = ref('gridLogger')
+}
 ```
 
 
@@ -110,25 +110,25 @@ By default, the plugin will create caches with reasonable defaults (whatever def
 In `grails-app/ignite/conf/resources/IgniteCacheResources.groovy`:
 
 ```
-    'com.mypackage.MyDomainClass' { bean ->
-        name = 'com.package.MyDomainClass'
-        cacheMode = CacheMode.PARTITIONED
-        atomicityMode = CacheAtomicityMode.TRANSACTIONAL
-        writeSynchronizationMode = CacheWriteSynchronizationMode.FULL_SYNC
-        evictionPolicy = { org.apache.ignite.cache.eviction.lru.LruEvictionPolicy policy ->
-            maxSize = 1000000
-        }
+'com.mypackage.MyDomainClass' { bean ->
+    name = 'com.package.MyDomainClass'
+    cacheMode = CacheMode.PARTITIONED
+    atomicityMode = CacheAtomicityMode.TRANSACTIONAL
+    writeSynchronizationMode = CacheWriteSynchronizationMode.FULL_SYNC
+    evictionPolicy = { org.apache.ignite.cache.eviction.lru.LruEvictionPolicy policy ->
+        maxSize = 1000000
     }
+}
 ```
 
 See Also:
 
 http://apacheignite.gridgain.org/v1.1/docs/evictions
 
-	
+
 #Scheduled, Distributed Tasks
 
-This plugin provides an Ignite service called `DistributedSchedulerService` that provides a partial implementation of the `ScheduledThreadPoolExectutor` interface but allows you to run the submitted jobs on the Ignite grid. 
+This plugin provides an Ignite service called `DistributedSchedulerService` that provides a partial implementation of the `ScheduledThreadPoolExectutor` interface but allows you to run the submitted jobs on the Ignite grid.
 
 The methods `scheduleAtFixedRate` and `scheduleWithFixedDelay` are currently implemented. The service keeps track of submitted job schedules using a grid-aware Set that is configured for REPLICATED caching, so that if any grid node goes down.
 
@@ -138,18 +138,16 @@ A Grails service of the same name ("`DistributedSchedulerService`") is also prov
 ```
 distributedSchedulerService.scheduleAtFixedRate(new HelloWorldGroovyTask(), 0, 1000, TimeUnit.MILLISECONDS);
 ```
-	       
+
 This example shows how to schedule the supplied task to execute once per second on the entire grid, regardless of the grid topology. The execution will be evenly load-balanced across all grid nodes. If any grid nodes go down the rebalancing will result in the same execution rate (once per second in this example).
-	       
+
 The example above can be run out-of-the-box (the `HelloWorldGroovyTask` is included in the plugin). You can then try neat things like spinning up another instance on a different port, and watching the grid fail-over and recover by killing one instance and bringing it back up.
-	
+
 
 #Notes
 
 Requires h2 version 1.3.137 (or higher)? Make sure you do this:
 
     inherits("global") {
-        // specify dependency exclusions here; for example, uncomment this to disable ehcache:
-        // excludes 'ehcache'
         excludes 'h2'
     }

@@ -1,42 +1,35 @@
 package org.grails.ignite;
 
-import org.apache.ignite.IgniteException;
-
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Interface for a distributed scheduler service. The service can schedule objects of type NamedRunnable, which
+ * A distributed scheduler service. The service can schedule objects of type NamedRunnable, which
  * provide a getName() method that returns an identifier for the Runnable. The identifier is used to lookup scheduled
  * tasks for cancellation or retrieving specific results (or exceptions).
  *
  * @author Dan Stieglitz
  */
+@SuppressWarnings("rawtypes")
 public interface SchedulerService {
 
-    public ScheduledFuture scheduleAtFixedRate(ScheduledRunnable command);
+    ScheduledFuture scheduleAtFixedRate(ScheduledRunnable command);
 
-    public ScheduledFuture scheduleWithFixedDelay(ScheduledRunnable command);
+    ScheduledFuture scheduleWithFixedDelay(ScheduledRunnable command);
 
-    public ScheduledFuture scheduleWithCron(ScheduledRunnable command);
+    ScheduledFuture scheduleWithCron(ScheduledRunnable command);
 
-    public ScheduledFuture schedule(ScheduledRunnable command);
+    ScheduledFuture schedule(ScheduledRunnable command);
 
-    public void stopScheduler();
+    void stopScheduler();
 
-    public void startScheduler();
+    void startScheduler();
 
-    public boolean isSchedulerRunning();
+    boolean isSchedulerRunning();
 
-    public boolean isScheduled(String id);
+    boolean isScheduled(String id);
 
     /**
-     * Cancel the task with the specified ID. Returns true if the task was found and the cancel was successful,
-     * false otherwise.
-     * @param name
-     * @param mayInterruptIfRunning
-     * @return
+     * Cancel the task with the specified ID. Returns true if the task was found and the cancel was successful.
      */
-    public boolean cancel(String name, boolean mayInterruptIfRunning);
-
+    boolean cancel(String name, boolean mayInterruptIfRunning);
 }

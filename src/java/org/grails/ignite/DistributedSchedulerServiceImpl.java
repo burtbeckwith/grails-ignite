@@ -34,6 +34,8 @@ import static org.apache.ignite.cache.CacheMode.REPLICATED;
  */
 public class DistributedSchedulerServiceImpl implements Service, SchedulerService {
 
+    private static final long serialVersionUID = 1;
+
     private static final Logger log = Logger.getLogger(DistributedSchedulerServiceImpl.class.getName());
     private static final String JOB_SCHEDULE_DATA_SET_NAME = "jobSchedules";
     private static IgniteSet<ScheduledRunnable> schedule;
@@ -51,6 +53,7 @@ public class DistributedSchedulerServiceImpl implements Service, SchedulerServic
         this.ignite = ignite;
     }
 
+    @SuppressWarnings("rawtypes")
     private static IgniteSet initializeSet(Ignite ignite) throws IgniteException {
         log.info("initializing distributed dataset: " + JOB_SCHEDULE_DATA_SET_NAME);
         CollectionConfiguration setCfg = new CollectionConfiguration();
@@ -61,92 +64,133 @@ public class DistributedSchedulerServiceImpl implements Service, SchedulerServic
     }
 
     @Override
-    public ScheduledFuture scheduleAtFixedRate(ScheduledRunnable scheduledRunnable) {
-        log.debug("scheduleAtFixedRate '" + scheduledRunnable + "',"
-                + scheduledRunnable.getInitialDelay() + ","
-                + scheduledRunnable.getPeriod() + ","
-                + scheduledRunnable.getTimeUnit());
+    public ScheduledFuture<?> scheduleAtFixedRate(ScheduledRunnable scheduledRunnable) {
+        if (log.isDebugEnabled()) {
+            log.debug("scheduleAtFixedRate '" + scheduledRunnable + "',"
+                    + scheduledRunnable.getInitialDelay() + ","
+                    + scheduledRunnable.getPeriod() + ","
+                    + scheduledRunnable.getTimeUnit());
+        }
 
-        ScheduledFuture future = executor.scheduleAtFixedRate(scheduledRunnable,
+        ScheduledFuture<?> future = executor.scheduleAtFixedRate(
+                scheduledRunnable,
                 scheduledRunnable.getInitialDelay(),
                 scheduledRunnable.getPeriod(),
                 scheduledRunnable.getTimeUnit());
 
-        log.debug("schedule returned " + future);
+        if (log.isDebugEnabled()) {
+            log.debug("schedule returned " + future);
+        }
 
         ignite.compute().broadcast(new SetClosure(ignite.name(), JOB_SCHEDULE_DATA_SET_NAME, scheduledRunnable));
 
-        log.info("added " + scheduledRunnable + " to schedule");
-        log.debug("scheduledRunnable: " + schedule);
+        if (log.isInfoEnabled()) {
+            log.info("added " + scheduledRunnable + " to schedule");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("scheduledRunnable: " + schedule);
+        }
 
-        log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        if (log.isDebugEnabled()) {
+            log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        }
         nameFutureMap.put(scheduledRunnable.getName(), future);
 
         return future;
     }
 
     @Override
-    public ScheduledFuture scheduleWithFixedDelay(ScheduledRunnable scheduledRunnable) {
-        log.debug("scheduleWithFixedDelay '" + scheduledRunnable + "',"
-                + scheduledRunnable.getInitialDelay() + ","
-                + scheduledRunnable.getDelay() + ","
-                + scheduledRunnable.getTimeUnit());
+    public ScheduledFuture<?> scheduleWithFixedDelay(ScheduledRunnable scheduledRunnable) {
+        if (log.isDebugEnabled()) {
+            log.debug("scheduleWithFixedDelay '" + scheduledRunnable + "',"
+                    + scheduledRunnable.getInitialDelay() + ","
+                    + scheduledRunnable.getDelay() + ","
+                    + scheduledRunnable.getTimeUnit());
+        }
 
-        ScheduledFuture future = executor.scheduleWithFixedDelay(scheduledRunnable.getUnderlyingRunnable(),
+        ScheduledFuture<?> future = executor.scheduleWithFixedDelay(scheduledRunnable.getUnderlyingRunnable(),
                 scheduledRunnable.getInitialDelay(),
                 scheduledRunnable.getDelay(),
                 scheduledRunnable.getTimeUnit());
 
-        log.debug("schedule returned " + future);
+        if (log.isDebugEnabled()) {
+            log.debug("schedule returned " + future);
+        }
 
         ignite.compute().broadcast(new SetClosure(ignite.name(), JOB_SCHEDULE_DATA_SET_NAME, scheduledRunnable));
 
-        log.info("added " + scheduledRunnable + " to schedule");
-        log.debug("scheduledRunnable: " + schedule);
+        if (log.isInfoEnabled()) {
+            log.info("added " + scheduledRunnable + " to schedule");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("scheduledRunnable: " + schedule);
+        }
 
-        log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        if (log.isDebugEnabled()) {
+            log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        }
         nameFutureMap.put(scheduledRunnable.getName(), future);
 
         return future;
     }
 
     @Override
-    public ScheduledFuture scheduleWithCron(ScheduledRunnable scheduledRunnable) {
-        log.debug("scheduleWithCron '" + scheduledRunnable + "'," + scheduledRunnable.getCronString());
+    public ScheduledFuture<?> scheduleWithCron(ScheduledRunnable scheduledRunnable) {
+        if (log.isDebugEnabled()) {
+            log.debug("scheduleWithCron '" + scheduledRunnable + "'," + scheduledRunnable.getCronString());
+        }
 
         if (scheduledRunnable.getCronString() == null) {
             throw new RuntimeException("No cron string provided for requested cron schedule: " + scheduledRunnable);
         }
 
-        ScheduledFuture future = executor.scheduleWithCron(scheduledRunnable, scheduledRunnable.getCronString());
+        ScheduledFuture<?> future = executor.scheduleWithCron(scheduledRunnable, scheduledRunnable.getCronString());
 
-        log.debug("schedule returned " + future);
+        if (log.isDebugEnabled()) {
+            log.debug("schedule returned " + future);
+        }
 
         ignite.compute().broadcast(new SetClosure(ignite.name(), JOB_SCHEDULE_DATA_SET_NAME, scheduledRunnable));
-        log.info("added " + scheduledRunnable + " to schedule");
-        log.debug("scheduledRunnable: " + schedule);
+        if (log.isInfoEnabled()) {
+            log.info("added " + scheduledRunnable + " to schedule");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("scheduledRunnable: " + schedule);
+        }
 
-        log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        if (log.isDebugEnabled()) {
+            log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        }
         nameFutureMap.put(scheduledRunnable.getName(), future);
 
         return future;
     }
 
     @Override
-    public ScheduledFuture schedule(ScheduledRunnable scheduledRunnable) {
-        log.debug("schedule '" + scheduledRunnable + "'," + scheduledRunnable.getDelay() + "," + scheduledRunnable.getTimeUnit());
+    public ScheduledFuture<?> schedule(ScheduledRunnable scheduledRunnable) {
+        if (log.isDebugEnabled()) {
+            log.debug("schedule '" + scheduledRunnable + "'," + scheduledRunnable.getDelay() + "," + scheduledRunnable.getTimeUnit());
+        }
 
-        ScheduledFuture future = executor.schedule(scheduledRunnable,
+        ScheduledFuture<?> future = executor.schedule(scheduledRunnable,
                 scheduledRunnable.getDelay(),
                 scheduledRunnable.getTimeUnit());
 
-        log.debug("schedule returned " + future);
+        if (log.isDebugEnabled()) {
+            log.debug("schedule returned " + future);
+        }
 
         ignite.compute().broadcast(new SetClosure(ignite.name(), JOB_SCHEDULE_DATA_SET_NAME, scheduledRunnable));
-        log.info("added " + scheduledRunnable + " to schedule");
-        log.debug("scheduledRunnable: " + schedule);
+        if (log.isInfoEnabled()) {
+            log.info("added " + scheduledRunnable + " to schedule");
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("scheduledRunnable: " + schedule);
+        }
 
-        log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        if (log.isDebugEnabled()) {
+            log.debug("added " + scheduledRunnable.getName() + ", " + future + " to namedFutureMap");
+        }
         nameFutureMap.put(scheduledRunnable.getName(), future);
 
         return future;
@@ -177,35 +221,43 @@ public class DistributedSchedulerServiceImpl implements Service, SchedulerServic
 
     // not in service interface
     public Map<String, ScheduledFuture<?>> getNameFutureMap() {
-        return this.nameFutureMap;
+        return nameFutureMap;
     }
 
     @Override
     public boolean cancel(String name, boolean mayInterruptIfRunning) {
-        log.debug("cancel '" + name + "', " + mayInterruptIfRunning);
-        Future future = nameFutureMap.get(name);
+        if (log.isDebugEnabled()) {
+            log.debug("cancel '" + name + "', " + mayInterruptIfRunning);
+        }
+        Future<?> future = nameFutureMap.get(name);
         if (future == null) {
             log.warn("tried to cancel, but no Future found for '" + name + "'");
             return true; // if not found, it's cancelled
-        } else {
-//            Future future = data.getFuture();
-            log.debug("cancelling via Future " + future);
-
-            // getFuture() will return a ScheduledFutureTask
-            boolean cancelled = executor.cancel((Runnable) future, true);
-
-            log.debug("cancel returned " + cancelled);
-            boolean removed = false;
-            if (cancelled) {
-                removed = schedule.remove(findScheduleDataByName(name));
-                log.debug("remove returned " + removed);
-                if (removed) {
-                    nameFutureMap.remove(name);
-                }
-            }
-
-            return cancelled && removed;
         }
+
+//        Future future = data.getFuture();
+        if (log.isDebugEnabled()) {
+            log.debug("cancelling via Future " + future);
+        }
+
+        // getFuture() will return a ScheduledFutureTask
+        boolean cancelled = executor.cancel((Runnable) future, true);
+
+        if (log.isDebugEnabled()) {
+            log.debug("cancel returned " + cancelled);
+        }
+        boolean removed = false;
+        if (cancelled) {
+            removed = schedule.remove(findScheduleDataByName(name));
+            if (log.isDebugEnabled()) {
+                log.debug("remove returned " + removed);
+            }
+            if (removed) {
+                nameFutureMap.remove(name);
+            }
+        }
+
+        return cancelled && removed;
     }
 
     @Override
@@ -225,28 +277,39 @@ public class DistributedSchedulerServiceImpl implements Service, SchedulerServic
 
     @Override
     public void cancel(ServiceContext serviceContext) {
-        log.info("service " + this + "cancelled!");
+        if (log.isInfoEnabled()) {
+            log.info("service " + this + "cancelled!");
+        }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void init(ServiceContext serviceContext) throws Exception {
-        this.executor = new DistributedScheduledThreadPoolExecutor(ignite, 1);
+        executor = new DistributedScheduledThreadPoolExecutor(ignite, 1);
         schedule = initializeSet(ignite);
-        log.info("service " + this + " initialized");
+        if (log.isInfoEnabled()) {
+            log.info("service " + this + " initialized");
+        }
     }
 
     @Override
     public void execute(ServiceContext serviceContext) throws Exception {
-        log.debug("schedule.size()=" + this.schedule.size());
+        if (log.isDebugEnabled()) {
+            log.debug("schedule.size()=" + schedule.size());
+        }
         for (ScheduledRunnable datum : schedule) {
-            log.debug("found existing schedule data " + datum);
+            if (log.isDebugEnabled()) {
+                log.debug("found existing schedule data " + datum);
+            }
             if (datum.getPeriod() > 0) {
                 scheduleAtFixedRate(datum);
             } else if (datum.getDelay() > 0) {
                 scheduleWithFixedDelay(datum);
             }
         }
-        log.debug("exiting service " + this + " execute");
+        if (log.isDebugEnabled()) {
+            log.debug("exiting service " + this + " execute");
+        }
     }
 
     public void setIgnite(Ignite ignite) {
@@ -257,6 +320,8 @@ public class DistributedSchedulerServiceImpl implements Service, SchedulerServic
      * Closure to populate the set.
      */
     private static class SetClosure implements IgniteRunnable {
+        private static final long serialVersionUID = 1;
+
         /**
          * Set name.
          */
@@ -270,7 +335,7 @@ public class DistributedSchedulerServiceImpl implements Service, SchedulerServic
          */
         SetClosure(String gridName, String setName, ScheduledRunnable data) {
             this.setName = setName;
-            this.scheduledRunnable = data;
+            scheduledRunnable = data;
             this.gridName = gridName;
         }
 

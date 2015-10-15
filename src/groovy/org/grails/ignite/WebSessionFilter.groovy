@@ -2,30 +2,34 @@ package org.grails.ignite
 
 import grails.util.Holders
 
-import javax.servlet.*
+import javax.servlet.FilterChain
+import javax.servlet.FilterConfig
+import javax.servlet.ServletException
+import javax.servlet.ServletRequest
+import javax.servlet.ServletResponse
+
+import org.apache.ignite.cache.websession.WebSessionFilter as IgniteWebSessionFilter
 
 /**
- * Created by dstieglitz on 9/1/15.
+ * @author dstieglitz
  */
-class WebSessionFilter extends org.apache.ignite.cache.websession.WebSessionFilter {
+class WebSessionFilter extends IgniteWebSessionFilter {
 
     @Override
     void init(FilterConfig cfg) throws ServletException {
         // get grid name from application configuration
         OverridablePropertyFilterConfigDecorator decorator = new OverridablePropertyFilterConfigDecorator(cfg)
-        def application = Holders.grailsApplication
 
         def configuredGridName = IgniteStartupHelper.DEFAULT_GRID_NAME
-        if (!(application.config.ignite.gridName instanceof ConfigObject)) {
-            configuredGridName = application.config.ignite.gridName
-        }
+        def conf = Holders.grailsApplication.config.ignite
 
-        def webSessionClusteringEnabled = (!(application.config.ignite.webSessionClusteringEnabled instanceof ConfigObject)
-                && application.config.ignite.webSessionClusteringEnabled.equals(true))
+        if (conf.containsKey('gridName')) {
+            configuredGridName = conf.gridName
+        }
 
         decorator.overrideInitParameter('IgniteWebSessionsGridName', configuredGridName)
 
-        if (webSessionClusteringEnabled) {
+        if (webSessionClusteringEnabled(conf)) {
             log.info "configuring web session clustering for gridName=${configuredGridName}"
             super.init(decorator)
         }
@@ -33,14 +37,14 @@ class WebSessionFilter extends org.apache.ignite.cache.websession.WebSessionFilt
 
     @Override
     void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
-        def application = Holders.grailsApplication
-        def webSessionClusteringEnabled = (!(application.config.ignite.webSessionClusteringEnabled instanceof ConfigObject)
-                && application.config.ignite.webSessionClusteringEnabled.equals(true))
-
-        if (webSessionClusteringEnabled) {
+        if (webSessionClusteringEnabled(Holders.grailsApplication.config.ignite)) {
             super.doFilter(req, res, chain)
         } else {
             chain.doFilter(req, res)
         }
+    }
+
+    private boolean webSessionClusteringEnabled(ConfigObject conf) {
+        (conf.webSessionClusteringEnabled instanceof Boolean) && conf.webSessionClusteringEnabled
     }
 }

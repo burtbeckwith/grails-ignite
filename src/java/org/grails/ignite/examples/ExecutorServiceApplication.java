@@ -15,6 +15,7 @@ public class ExecutorServiceApplication extends AbstractIgniteApplication implem
         super(ignite);
     }
 
+    @SuppressWarnings("serial")
     public void run() {
         // Get cluster-enabled executor service.
         ExecutorService exec = ignite.executorService();
@@ -30,5 +31,4 @@ public class ExecutorServiceApplication extends AbstractIgniteApplication implem
             });
         }
     }
-
 }

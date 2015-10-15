@@ -10,7 +10,7 @@ import org.apache.ignite.Ignite;
 public abstract class AbstractIgniteApplication {
     protected Ignite ignite;
 
-    public AbstractIgniteApplication(Ignite ignite) {
+    protected AbstractIgniteApplication(Ignite ignite) {
         this.ignite = ignite;
     }
 }

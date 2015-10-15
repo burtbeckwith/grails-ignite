@@ -1,6 +1,5 @@
 package org.grails.ignite;
 
-import com.cedarsoftware.util.io.GroovyJsonReader;
 import org.apache.ignite.IgniteCheckedException;
 import org.apache.ignite.marshaller.Marshaller;
 import org.apache.ignite.marshaller.MarshallerContext;
@@ -8,7 +7,6 @@ import org.apache.ignite.marshaller.optimized.OptimizedMarshaller;
 import org.apache.ignite.marshaller.optimized.OptimizedMarshallerIdMapper;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -31,7 +29,7 @@ public class GroovyOptimizedMarshallerDecorator implements Marshaller {
     }
 
     public void setUnderlyingMarshaller(OptimizedMarshaller optimizedMarshaller) {
-        this.underlyingMarshaller = optimizedMarshaller;
+        underlyingMarshaller = optimizedMarshaller;
     }
 
     public void setRequireSerializable(boolean requireSer) {

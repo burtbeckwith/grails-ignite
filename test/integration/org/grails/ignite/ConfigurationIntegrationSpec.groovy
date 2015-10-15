@@ -19,15 +19,15 @@ class ConfigurationIntegrationSpec extends IntegrationSpec {
         def caches = grid.configuration().cacheConfiguration.collectEntries { [(it.name): it] }
 
         then:
-        assert caches.containsKey('test_replicated')
-        assert caches['test_replicated'].cacheMode == CacheMode.REPLICATED
-        assert caches['test_replicated'].writeSynchronizationMode == CacheWriteSynchronizationMode.FULL_SYNC
-        assert caches['test_replicated'].atomicityMode == CacheAtomicityMode.TRANSACTIONAL
+        caches.containsKey('test_replicated')
+        caches['test_replicated'].cacheMode == CacheMode.REPLICATED
+        caches['test_replicated'].writeSynchronizationMode == CacheWriteSynchronizationMode.FULL_SYNC
+        caches['test_replicated'].atomicityMode == CacheAtomicityMode.TRANSACTIONAL
 
-        assert caches.containsKey('test_partitioned')
-        assert caches['test_partitioned'].cacheMode == CacheMode.PARTITIONED
-        assert caches['test_partitioned'].writeSynchronizationMode == CacheWriteSynchronizationMode.FULL_ASYNC
-        assert caches['test_partitioned'].atomicityMode == CacheAtomicityMode.ATOMIC
+        caches.containsKey('test_partitioned')
+        caches['test_partitioned'].cacheMode == CacheMode.PARTITIONED
+        caches['test_partitioned'].writeSynchronizationMode == CacheWriteSynchronizationMode.FULL_ASYNC
+        caches['test_partitioned'].atomicityMode == CacheAtomicityMode.ATOMIC
     }
 
     void "test l2 cache configuration"() {
@@ -39,7 +39,7 @@ class ConfigurationIntegrationSpec extends IntegrationSpec {
         def caches = grid.configuration().cacheConfiguration.collectEntries { [(it.name): it] }
 
         then:
-        assert caches.containsKey('org.grails.ignite.Widget') // region configured manually
+        caches.containsKey('org.grails.ignite.Widget') // region configured manually
 
         when:
         def widget = new Widget(name: 'test widget')
@@ -50,7 +50,7 @@ class ConfigurationIntegrationSpec extends IntegrationSpec {
 
         then:
         Widget.count() == 1
-        assert caches.containsKey('org.grails.ignite.Widget')
+        caches.containsKey('org.grails.ignite.Widget')
         println sessionFactory.statistics
         println sessionFactory.statistics.secondLevelCacheStatistics
 

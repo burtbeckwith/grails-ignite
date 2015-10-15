@@ -6,25 +6,26 @@ import javax.servlet.ServletContext
 /**
  * A simple decorator over a FilterConfig object that permits overriding of init parameters so that we can pull
  * values from the Grails Config
- * Created by dstieglitz on 9/1/15.
+ *
+ * @author dstieglitz
  */
 class OverridablePropertyFilterConfigDecorator implements FilterConfig {
 
     private FilterConfig underlyingFilterConfig
     private Map overridedInitParameters = [:]
 
-    public OverridablePropertyFilterConfigDecorator(FilterConfig config) {
-        this.underlyingFilterConfig = config;
+    OverridablePropertyFilterConfigDecorator(FilterConfig config) {
+        underlyingFilterConfig = config
     }
 
     @Override
     String getFilterName() {
-        return underlyingFilterConfig.getFilterName();
+        return underlyingFilterConfig.filterName
     }
 
     @Override
     ServletContext getServletContext() {
-        return underlyingFilterConfig.getServletContext();
+        return underlyingFilterConfig.servletContext
     }
 
     @Override
@@ -37,12 +38,12 @@ class OverridablePropertyFilterConfigDecorator implements FilterConfig {
         }
     }
 
-    public void overrideInitParameter(String name, String value) {
+    void overrideInitParameter(String name, String value) {
         overridedInitParameters[name] = value
     }
 
     @Override
     Enumeration<String> getInitParameterNames() {
-        return underlyingFilterConfig.getInitParameterNames()
+        return underlyingFilterConfig.initParameterNames
     }
 }

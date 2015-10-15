@@ -16,13 +16,13 @@ public class FirstIgniteComputeApplication extends AbstractIgniteApplication imp
         super(ignite);
     }
 
+    @SuppressWarnings("serial")
     public void run() {
-        Collection<IgniteCallable<Integer>> calls = new ArrayList();
+        Collection<IgniteCallable<Integer>> calls = new ArrayList<IgniteCallable<Integer>>();
 
         // Iterate through all the words in the sentence and create Callable jobs.
         for (final String word : "Count characters using callable".split(" ")) {
             calls.add(new IgniteCallable<Integer>() {
-                @Override
                 public Integer call() throws Exception {
                     return word.length();
                 }
@@ -35,8 +35,9 @@ public class FirstIgniteComputeApplication extends AbstractIgniteApplication imp
         int sum = 0;
 
         // Add up individual word lengths received from remote nodes.
-        for (int len : res)
+        for (int len : res) {
             sum += len;
+        }
 
         System.out.println(">>> Total number of characters in the phrase is '" + sum + "'.");
     }

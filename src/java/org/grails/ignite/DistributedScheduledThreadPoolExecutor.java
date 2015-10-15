@@ -1,8 +1,6 @@
 package org.grails.ignite;
 
-import groovy.util.logging.Log4j;
 import it.sauronsoftware.cron4j.Scheduler;
-import it.sauronsoftware.cron4j.SchedulerListener;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.lang.IgniteRunnable;
 import org.apache.ignite.resources.IgniteInstanceResource;
@@ -20,7 +18,6 @@ import java.util.concurrent.*;
  * @author srasul
  * @see http://code.nomad-labs.com/2011/12/09/mother-fk-the-scheduledexecutorservice/
  */
-@Log4j
 public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
 
     private static final Logger log = Logger.getLogger(DistributedScheduledThreadPoolExecutor.class.getName());
@@ -30,35 +27,32 @@ public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolE
     private Scheduler cronScheduler;
 
     public DistributedScheduledThreadPoolExecutor() {
-        super(5);
-        this.cronScheduler = new Scheduler();
-        this.cronScheduler.start();
+        this(5);
     }
 
     public DistributedScheduledThreadPoolExecutor(int corePoolSize) {
         super(corePoolSize);
-        this.cronScheduler = new Scheduler();
-        this.cronScheduler.start();
+        cronScheduler = new Scheduler();
+        cronScheduler.start();
     }
 
     public DistributedScheduledThreadPoolExecutor(Ignite ignite, int corePoolSize) {
-        super(corePoolSize);
+        this(corePoolSize);
         this.ignite = ignite;
-        this.cronScheduler = new Scheduler();
-        this.cronScheduler.start();
     }
 
     @Override
-    public ScheduledFuture scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+    public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
         return super.scheduleAtFixedRate(new IgniteDistributedRunnable(command), initialDelay, period, unit);
     }
 
     @Override
-    public ScheduledFuture scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
         return super.scheduleWithFixedDelay(new IgniteDistributedRunnable(command), initialDelay, delay, unit);
     }
 
-    public ScheduledFuture scheduleWithCron(Runnable command, String cronString) {
+    @SuppressWarnings("rawtypes")
+    public ScheduledFuture<?> scheduleWithCron(Runnable command, String cronString) {
         IgniteCronDistributedRunnable scheduledFuture = new IgniteCronDistributedRunnable(command);
         String id = cronScheduler.schedule(cronString, scheduledFuture);
         scheduledFuture.setCronTaskId(id);
@@ -67,8 +61,11 @@ public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolE
         return scheduledFuture;
     }
 
+    @SuppressWarnings("rawtypes")
     public boolean cancel(Runnable runnable, boolean mayInterruptIfRunning) {
-        log.debug("cancel " + runnable + "," + mayInterruptIfRunning);
+        if (log.isDebugEnabled()) {
+            log.debug("cancel " + runnable + "," + mayInterruptIfRunning);
+        }
 
         if (mayInterruptIfRunning) {
             // FIXME interrupt the Runnable?
@@ -78,30 +75,33 @@ public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolE
         if (runnable instanceof IgniteCronDistributedRunnable) {
             ((IgniteCronDistributedRunnable) runnable).cancel(mayInterruptIfRunning);
             return true;
-        } else {
-            // these are ScheduledFutureTasks
+        }
+
+        // these are ScheduledFutureTasks
+        if (log.isDebugEnabled()) {
             for (Runnable r : getQueue()) {
                 log.debug("found queued runnable: " + r);
             }
-
-            return super.remove(runnable);
         }
+
+        return super.remove(runnable);
     }
 
     public boolean isRunning() {
-        return this.running;
+        return running;
     }
 
     public void setRunning(boolean trueOrFalse) {
-        this.running = trueOrFalse;
+        running = trueOrFalse;
     }
 
     private class IgniteDistributedRunnable implements IgniteRunnable {
+        private static final long serialVersionUID = 1;
+
         protected Runnable runnable;
 
         public IgniteDistributedRunnable(Runnable scheduledRunnable) {
-            super();
-            this.runnable = scheduledRunnable;
+            runnable = scheduledRunnable;
         }
 
         @Override
@@ -123,6 +123,8 @@ public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolE
     private class IgniteCronDistributedRunnable<V>
             extends IgniteDistributedRunnable
             implements RunnableScheduledFuture<V> {
+
+        private static final long serialVersionUID = 1;
 
         private String cronTaskId;
         private boolean cancelled;
@@ -158,7 +160,7 @@ public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolE
 
         @Override
         public boolean isCancelled() {
-            return this.cancelled;
+            return cancelled;
         }
 
         @Override
@@ -177,7 +179,7 @@ public class DistributedScheduledThreadPoolExecutor extends ScheduledThreadPoolE
         }
 
         public String getCronTaskId() {
-            return this.cronTaskId;
+            return cronTaskId;
         }
 
         public void setCronTaskId(String cronTaskId) {

@@ -11,36 +11,30 @@ import org.springframework.beans.factory.parsing.BeanDefinitionParsingException
 import org.springframework.context.ApplicationContext
 
 /**
- * Created with IntelliJ IDEA.
- * User: dstieglitz
- * Date: 8/23/15
- * Time: 3:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author dstieglitz
  */
 @Log4j
 class IgniteStartupHelper {
 
-    static def IGNITE_WEB_SESSION_CACHE_NAME = 'session-cache'
-    static def DEFAULT_GRID_NAME = 'grid'
-    static def IGNITE_CONFIG_DIRECTORY_NAME = 'ignite'
+    static final String IGNITE_WEB_SESSION_CACHE_NAME = 'session-cache'
+    static final String DEFAULT_GRID_NAME = 'grid'
+    static final String IGNITE_CONFIG_DIRECTORY_NAME = 'ignite'
 
     private static ApplicationContext igniteApplicationContext
     public static Ignite grid
     private static BeanBuilder igniteBeans = new BeanBuilder()
 
-    public static BeanBuilder getBeans(String resourcePattern, BeanBuilder bb = null) {
+    static BeanBuilder getBeans(String resourcePattern, BeanBuilder bb = null) {
         if (bb == null) {
             bb = new BeanBuilder()
         }
 
-        bb.setClassLoader(this.class.classLoader)
-        Binding binding = new Binding()
-        binding.application = Holders.grailsApplication
-        bb.setBinding(binding)
+        bb.classLoader = getClass().classLoader
+        bb.binding = new Binding(application: Holders.grailsApplication)
 
 //        def pluginDir = GrailsPluginUtils.pluginInfos.find { it.name == 'ignite' }?.pluginDir
-//        def defaultUrl = null
-//        def url = null
+//        def defaultUrl
+//        def url
 //
 //        if (pluginDir != null) {
 //            defaultUrl = "file:${pluginDir}/grails-app/conf/spring/${fileName}.groovy"
@@ -54,69 +48,69 @@ class IgniteStartupHelper {
 //        log.info "attempting to load beans from ${url}"
 //        bb.importBeans(url)
 
-
         bb.importBeans(resourcePattern)
 
         return bb
     }
 
-    public static boolean startIgnite() {
+    static boolean startIgnite() {
         // look for a IgniteResources.groovy file on the classpath
         // load it into an igniteApplicationContext and start ignite
         // merge the application context
 
-        def igniteEnabled = (!(Holders.grailsApplication.config.ignite.enabled instanceof ConfigObject)
-                && Holders.grailsApplication.config.ignite.enabled.equals(true))
+        def conf = Holders.grailsApplication.config.ignite
+        boolean igniteEnabled = (conf.enabled instanceof Boolean) && conf.enabled
 
-        if (Holders.grailsApplication.config.ignite.config.locations instanceof ConfigObject) {
-            throw new IllegalArgumentException("You must specify the locations to Ignite configuration files in ignite.config.locations, see docs");
+        if (!conf.config.containsKey('locations')) {
+            throw new IllegalArgumentException("You must specify the locations to Ignite configuration files in ignite.config.locations, see docs")
         }
 
-        if (!Holders.grailsApplication.config.ignite.config.locations instanceof Collection) {
-            throw new IllegalArgumentException("You must specify a collection of resource locations to Ignite configuration files in ignite.config.locations, see docs");
+        def locations = conf.config.locations
+
+        if (!(locations instanceof Collection)) {
+            throw new IllegalArgumentException("You must specify a collection of resource locations to Ignite configuration files in ignite.config.locations, see docs")
         }
 
-        if (Holders.grailsApplication.config.ignite.config.locations.empty) {
-            throw new IllegalArgumentException("You must specify the locations to Ignite configuration files in ignite.config.locations, see docs");
+        if (!locations) {
+            throw new IllegalArgumentException("You must specify the locations to Ignite configuration files in ignite.config.locations, see docs")
         }
 
         log.debug "startIgnite() --> igniteEnabled=${igniteEnabled}"
 
-        if (igniteEnabled) {
-            Holders.grailsApplication.config.ignite.config.locations.each {
-                log.info "loading Ignite beans configuration from ${it}"
-                getBeans(it, igniteBeans)
-            }
-
-            igniteApplicationContext = igniteBeans.createApplicationContext()
-
-            igniteApplicationContext.beanDefinitionNames.each {
-                log.debug "found bean ${it}"
-            }
-
-            if (igniteApplicationContext == null) {
-                throw new IllegalArgumentException("Unable to initialize");
-            }
-
-            return startIgniteFromSpring();
-        } else {
+        if (!igniteEnabled) {
             log.warn "startIgnite called, but ignite is not enabled in configuration"
-            return false;
+            return false
         }
+
+        locations.each {
+            log.info "loading Ignite beans configuration from ${it}"
+            getBeans(it, igniteBeans)
+        }
+
+        igniteApplicationContext = igniteBeans.createApplicationContext()
+        if (igniteApplicationContext == null) {
+            throw new IllegalArgumentException("Unable to initialize")
+        }
+
+        igniteApplicationContext.beanDefinitionNames.each {
+            log.debug "found bean ${it}"
+        }
+
+        return startIgniteFromSpring()
     }
 
-    public static boolean startIgniteFromSpring() {
-        def application = Holders.grailsApplication
+    static boolean startIgniteFromSpring() {
         def ctx = igniteApplicationContext
 
         def configuredGridName = DEFAULT_GRID_NAME
-        if (!(application.config.ignite.gridName instanceof ConfigObject)) {
-            configuredGridName = application.config.ignite.gridName
+        def conf = Holders.grailsApplication.config.ignite
+        if (conf.containsKey('gridName')) {
+            configuredGridName = conf.gridName
         }
 
-        System.setProperty("IGNITE_QUIET", "false");
+        System.setProperty("IGNITE_QUIET", "false")
 
-        BeanBuilder cacheBeans = null
+        BeanBuilder cacheBeans
 
         try {
             log.info "looking for cache resources..."
@@ -152,58 +146,59 @@ class IgniteStartupHelper {
                 }
             }
 
-            grid.configuration().setCacheConfiguration(cacheConfigurationBeans.toArray() as CacheConfiguration[])
+            grid.configuration().setCacheConfiguration(cacheConfigurationBeans as CacheConfiguration[])
 
             log.info "Starting Ignite grid..."
             grid.start()
-            grid.services().deployClusterSingleton("distributedSchedulerService", new DistributedSchedulerServiceImpl());
+            grid.services().deployClusterSingleton("distributedSchedulerService", new DistributedSchedulerServiceImpl())
 
         } catch (NoSuchBeanDefinitionException e) {
             log.warn e.message
-            return false;
+            return false
         } catch (IgniteCheckedException e) {
             log.error e.message, e
-            return false;
+            return false
         }
 
 //        ctx.getBean('distributedSchedulerService').grid = grid
-        return true;
+        return true
     }
 
-    public static ApplicationContext getIgniteApplicationContext() {
-        return igniteApplicationContext;
+    static ApplicationContext getIgniteApplicationContext() {
+        return igniteApplicationContext
     }
 
-//    public static CacheConfiguration getSpringConfiguredCache(String name) {
+//    static CacheConfiguration getSpringConfiguredCache(String name) {
 //        try {
 //            return igniteApplicationContext.getBean(name)
 //        } catch (NoSuchBeanDefinitionException e) {
-//            return null;
+//            return null
 //        }
 //    }
 //
-//    public static boolean startIgniteProgramatically() {
+//    static boolean startIgniteProgramatically() {
 //        def ctx = Holders.applicationContext
 //        def application = Holders.grailsApplication
 //
 //        def configuredAddresses = []
-//        if (!(application.config.ignite.discoverySpi.addresses instanceof ConfigObject)) {
-//            configuredAddresses = application.config.ignite.discoverySpi.addresses
+//        def conf = Holders.grailsApplication.config.ignite
+//        if (conf.discoverySpi.containsKey('addresses')) {
+//            configuredAddresses = conf.discoverySpi.addresses
 //        }
 //
-//        IgniteConfiguration config = new IgniteConfiguration();
-//        config.setMarshaller(new OptimizedMarshaller(false));
-//        def discoverySpi = new org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi();
-//        discoverySpi.setNetworkTimeout(5000);
-//        def ipFinder = new org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder();
+//        IgniteConfiguration config = new IgniteConfiguration()
+//        config.setMarshaller(new OptimizedMarshaller(false))
+//        def discoverySpi = new org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi()
+//        discoverySpi.setNetworkTimeout(5000)
+//        def ipFinder = new org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder()
 //        ipFinder.setAddresses(configuredAddresses)
 //        discoverySpi.setIpFinder(ipFinder)
-//        def grid = Ignition.start(config);
+//        def grid = Ignition.start(config)
 //
 //        return grid != null
 //    }
 //
-//    public static ApplicationContext getApplicationContext() {
-//        return igniteApplicationContext;
+//    static ApplicationContext getApplicationContext() {
+//        return igniteApplicationContext
 //    }
 }

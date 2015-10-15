@@ -4,33 +4,38 @@ import org.apache.ignite.cache.CacheWriteSynchronizationMode
 import org.apache.ignite.cache.eviction.lru.LruEvictionPolicy
 import org.apache.ignite.configuration.CacheConfiguration
 import org.apache.ignite.configuration.IgniteConfiguration
+import org.apache.ignite.events.EventType
 import org.apache.ignite.marshaller.optimized.OptimizedMarshaller
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi
+import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder
+import org.grails.ignite.DeferredStartIgniteSpringBean
 import org.grails.ignite.IgniteGrailsLogger
 
 //import org.apache.ignite.logger.log4j.Log4JLogger
 import org.grails.ignite.IgniteStartupHelper
 
 beans {
-    def peerClassLoadingEnabledInConfig = (!(application.config.ignite.peerClassLoadingEnabled instanceof ConfigObject)
-            && application.config.ignite.peerClassLoadingEnabled.equals(true))
+    def conf = application.config.ignite
+
+    def peerClassLoadingEnabledInConfig = (conf.peerClassLoadingEnabled instanceof Boolean) &&
+            conf.peerClassLoadingEnabled
 
     def configuredGridName = IgniteStartupHelper.DEFAULT_GRID_NAME
-    if (!(application.config.ignite.gridName instanceof ConfigObject)) {
-        configuredGridName = application.config.ignite.gridName
+    if (conf.containsKey('gridName')) {
+        configuredGridName = conf.gridName
     }
 
     def configuredNetworkTimeout = 3000
-    if (!(application.config.ignite.discoverySpi.networkTimeout instanceof ConfigObject)) {
-        configuredNetworkTimeout = application.config.ignite.discoverySpi.networkTimeout
+    if (conf.discoverySpi.containsKey('networkTimeout')) {
+        configuredNetworkTimeout = conf.discoverySpi.networkTimeout
     }
 
     def configuredAddresses = []
-    if (!(application.config.ignite.discoverySpi.addresses instanceof ConfigObject)) {
-        configuredAddresses = application.config.ignite.discoverySpi.addresses
+    if (conf.discoverySpi.containsKey('addresses')) {
+        configuredAddresses = conf.discoverySpi.addresses
     }
 
-    def igniteEnabled = (!(application.config.ignite.enabled instanceof ConfigObject)
-            && application.config.ignite.enabled.equals(true))
+    def igniteEnabled = (conf.enabled instanceof Boolean) && conf.enabled
 
     /*
      * Only configure Ignite if the configuration value ignite.enabled=true is defined
@@ -57,18 +62,19 @@ beans {
             //                }
             //            }
 
-            includeEventTypes = [org.apache.ignite.events.EventType.EVT_TASK_STARTED,
-                    org.apache.ignite.events.EventType.EVT_TASK_FINISHED,
-                    org.apache.ignite.events.EventType.EVT_TASK_FAILED,
-                    org.apache.ignite.events.EventType.EVT_TASK_TIMEDOUT,
-                    org.apache.ignite.events.EventType.EVT_TASK_SESSION_ATTR_SET,
-                    org.apache.ignite.events.EventType.EVT_TASK_REDUCED,
-                    org.apache.ignite.events.EventType.EVT_CACHE_OBJECT_PUT,
-                    org.apache.ignite.events.EventType.EVT_CACHE_OBJECT_READ]
+            includeEventTypes = [
+                    EventType.EVT_TASK_STARTED,
+                    EventType.EVT_TASK_FINISHED,
+                    EventType.EVT_TASK_FAILED,
+                    EventType.EVT_TASK_TIMEDOUT,
+                    EventType.EVT_TASK_SESSION_ATTR_SET,
+                    EventType.EVT_TASK_REDUCED,
+                    EventType.EVT_CACHE_OBJECT_PUT,
+                    EventType.EVT_CACHE_OBJECT_READ]
 
-            discoverySpi = { org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi discoverySpi ->
+            discoverySpi = { TcpDiscoverySpi discoverySpi ->
                 networkTimeout = configuredNetworkTimeout
-                ipFinder = { org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder tcpDiscoveryMulticastIpFinder ->
+                ipFinder = { TcpDiscoveryMulticastIpFinder tcpDiscoveryMulticastIpFinder ->
                     addresses = configuredAddresses
                 }
             }
@@ -87,7 +93,7 @@ beans {
             gridLogger = ref('gridLogger')
         }
 
-        grid(org.grails.ignite.DeferredStartIgniteSpringBean) { bean ->
+        grid(DeferredStartIgniteSpringBean) { bean ->
             bean.lazyInit = true
 //            bean.dependsOn = ['persistenceInterceptor']
             configuration = ref('igniteCfg')

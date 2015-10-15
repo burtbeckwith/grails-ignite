@@ -8,11 +8,11 @@ import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsDomainBinder
 import org.grails.ignite.IgniteStartupHelper
 
 beans {
-    def l2CacheEnabled = (!(application.config.ignite.l2CacheEnabled instanceof ConfigObject)
-            && application.config.ignite.l2CacheEnabled.equals(true))
 
-    def webSessionClusteringEnabled = (!(application.config.ignite.webSessionClusteringEnabled instanceof ConfigObject)
-            && application.config.ignite.webSessionClusteringEnabled.equals(true))
+    def conf = application.config.ignite
+
+    def webSessionClusteringEnabled = (conf.webSessionClusteringEnabled instanceof Boolean) &&
+            conf.webSessionClusteringEnabled
 
     if (webSessionClusteringEnabled) {
         webSessionClusterCacheConfigurationBean(CacheConfiguration) {
@@ -25,6 +25,7 @@ beans {
         }
     }
 
+    def l2CacheEnabled = (conf.l2CacheEnabled instanceof Boolean) && conf.l2CacheEnabled
     if (l2CacheEnabled) {
         // Hibernate L2 cache parent configurations
         atomicCache(CacheConfiguration) { bean ->

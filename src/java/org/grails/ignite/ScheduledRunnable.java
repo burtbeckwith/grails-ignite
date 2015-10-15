@@ -1,16 +1,16 @@
 package org.grails.ignite;
 
-import java.io.Serializable;
 import java.util.UUID;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This class manages instances of scheduled feeds in the Ignite grid. Instances of this class are managed in a schedule
+ * Manages instances of scheduled feeds in the Ignite grid. Instances are managed in a schedule
  * set which is distributed across the grid so that if the singleton scheduler node goes down, whichever nodes takes
  * over can retrieve the current schedule from the grid and pick up the scheduling.
  */
-public class ScheduledRunnable implements NamedRunnable, Serializable {
+public class ScheduledRunnable implements NamedRunnable {
+    private static final long serialVersionUID = 1;
+
     private String name;
     private Runnable underlyingRunnable;
     private long initialDelay = -1;
@@ -20,7 +20,7 @@ public class ScheduledRunnable implements NamedRunnable, Serializable {
     private String cronString;
 
     public ScheduledRunnable() {
-        this.name = UUID.randomUUID().toString();
+        this(UUID.randomUUID().toString());
     }
 
     public ScheduledRunnable(String name) {
@@ -29,18 +29,22 @@ public class ScheduledRunnable implements NamedRunnable, Serializable {
 
     public ScheduledRunnable(Runnable runnable) {
         if (runnable instanceof NamedRunnable) {
-            this.name = ((NamedRunnable) runnable).getName();
+            name = ((NamedRunnable) runnable).getName();
         }
-        this.underlyingRunnable = runnable;
-        this.name = UUID.randomUUID().toString();
+        else {
+            name = UUID.randomUUID().toString();
+        }
+        underlyingRunnable = runnable;
     }
 
     public ScheduledRunnable(String name, Runnable runnable) {
         if (runnable instanceof NamedRunnable) {
             this.name = ((NamedRunnable) runnable).getName();
         }
-        this.underlyingRunnable = runnable;
-        this.name = name;
+        else {
+            this.name = name;
+        }
+        underlyingRunnable = runnable;
     }
 
     public TimeUnit getTimeUnit() {
@@ -83,6 +87,7 @@ public class ScheduledRunnable implements NamedRunnable, Serializable {
         this.delay = delay;
     }
 
+    @Override
     public String toString() {
         return name;
     }
@@ -96,7 +101,7 @@ public class ScheduledRunnable implements NamedRunnable, Serializable {
     }
 
     public String getCronString() {
-        return this.cronString;
+        return cronString;
     }
 
     public void setCronString(String cronString) {
@@ -105,13 +110,15 @@ public class ScheduledRunnable implements NamedRunnable, Serializable {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
         if (!(obj instanceof ScheduledRunnable)) return false;
-        return ((ScheduledRunnable) obj).toString().equals(this.toString());
+        return ((ScheduledRunnable) obj).toString().equals(toString());
     }
 
     @Override
     public int hashCode() {
         return name.hashCode();
     }
-
 }

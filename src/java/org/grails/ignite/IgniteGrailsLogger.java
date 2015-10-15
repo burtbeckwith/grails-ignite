@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by dstieglitz on 9/24/15.
+ * @author dstieglitz
  */
 public class IgniteGrailsLogger implements IgniteLogger {
 
@@ -19,7 +19,7 @@ public class IgniteGrailsLogger implements IgniteLogger {
     }
 
     public IgniteGrailsLogger(Logger logger) {
-        this.underlyingLogger = logger;
+        underlyingLogger = logger;
     }
 
     @Override
@@ -30,7 +30,7 @@ public class IgniteGrailsLogger implements IgniteLogger {
         if (o instanceof String) {
             className = (String)o;
         } else if (o instanceof Class) {
-            className = ((Class) o).getName();
+            className = ((Class<?>) o).getName();
         } else {
             o = o.toString();
         }
@@ -47,7 +47,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
         if (underlyingLogger == null) {
             System.out.println(s);
         }
-        underlyingLogger.trace(s);
+        else {
+            underlyingLogger.trace(s);
+        }
     }
 
     @Override
@@ -55,7 +57,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
         if (underlyingLogger == null) {
             System.out.println(s);
         }
-        underlyingLogger.debug(s);
+        else {
+            underlyingLogger.debug(s);
+        }
     }
 
     @Override
@@ -63,7 +67,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
         if (underlyingLogger == null) {
             System.out.println(s);
         }
-        underlyingLogger.info(s);
+        else {
+            underlyingLogger.info(s);
+        }
     }
 
     @Override
@@ -71,7 +77,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
         if (underlyingLogger == null) {
             System.out.println(s);
         }
-        underlyingLogger.warn(s);
+        else {
+            underlyingLogger.warn(s);
+        }
     }
 
     @Override
@@ -80,7 +88,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
             System.out.println(s);
             throwable.printStackTrace();
         }
-        underlyingLogger.warn(s, throwable);
+        else {
+            underlyingLogger.warn(s, throwable);
+        }
     }
 
     @Override
@@ -88,7 +98,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
         if (underlyingLogger == null) {
             System.err.println(s);
         }
-        underlyingLogger.error(s);
+        else {
+            underlyingLogger.error(s);
+        }
     }
 
     @Override
@@ -97,7 +109,9 @@ public class IgniteGrailsLogger implements IgniteLogger {
             System.err.println(s);
             throwable.printStackTrace();
         }
-        underlyingLogger.error(s, throwable);
+        else {
+            underlyingLogger.error(s, throwable);
+        }
     }
 
     @Override

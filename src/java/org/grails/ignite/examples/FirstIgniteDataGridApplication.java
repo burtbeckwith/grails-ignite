@@ -19,14 +19,16 @@ public class FirstIgniteDataGridApplication extends AbstractIgniteApplication im
     }
 
     private void putAndGet() {
-        this.cache = ignite.getOrCreateCache("testCache");
+        cache = ignite.getOrCreateCache("testCache");
 
         // Store keys in cache (values will end up on different cache nodes).
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++) {
             cache.put(i, Integer.toString(i));
+         }
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++) {
             System.out.println("Got [key=" + i + ", val=" + cache.get(i) + ']');
+         }
     }
 
     private void atomicOperations() {
@@ -60,8 +62,9 @@ public class FirstIgniteDataGridApplication extends AbstractIgniteApplication im
         try {
             String hello = cache.get(11);
 
-            if (hello == "Hello")
+            if (hello == "Hello") {
                 cache.put(11, "Hello");
+            }
 
             cache.put(22, "World");
 
