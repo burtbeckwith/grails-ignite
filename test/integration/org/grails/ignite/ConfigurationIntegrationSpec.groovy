@@ -50,6 +50,7 @@ class ConfigurationIntegrationSpec extends IntegrationSpec {
 
         then:
         Widget.count() == 1
+        grid.cache('org.grails.ignite.Widget').metrics().size == 1
         caches.containsKey('org.grails.ignite.Widget')
         println sessionFactory.statistics
         println sessionFactory.statistics.secondLevelCacheStatistics
